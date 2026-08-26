@@ -313,7 +313,7 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text("• Purpose: Built to empower every Muslim with authentic, offline-first tools for daily worship, Quran study, accurate prayer times, Qibla finding, and deen tracking.", fontSize = 13.sp)
                     Spacer(modifier = Modifier.height(6.dp))
-                    Text("• Architecture: 100% on-device astronomical prayer calculations, local Uthmani Quran reader, native Android exact alarms, and Gemini Live Voice & Google Search Grounding for real-time scholar inquiries.", fontSize = 13.sp)
+                    Text("• Architecture: 100% on-device astronomical prayer calculations, local Uthmani Quran reader, native Android exact alarms, verified authentic Hadith & Dua engines, and in-app Islamic knowledge search & web reader.", fontSize = 13.sp)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("May Allah accept this humble effort from Developer Rauf and make it beneficial for the Ummah.", fontSize = 12.sp, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic, color = MaterialTheme.colorScheme.primary)
                 }

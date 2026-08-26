@@ -360,15 +360,14 @@ private fun QuickActionGrid(
         SectionHeader(title = "Quick Shortcuts")
 
         val actions = listOf(
-            Triple("AI Scholar", Icons.Filled.AutoAwesome) { onNavigateToDiscoverTab(DiscoverTab.AI_SCHOLAR) },
+            Triple("Search", Icons.Filled.Search) { onNavigateToDiscoverTab(DiscoverTab.SEARCH) },
             Triple("Holy Quran", Icons.Filled.MenuBook) { onNavigateToScreen(Screen.Quran.route) },
             Triple("Qibla Finder", Icons.Filled.Explore) { onNavigateToDiscoverTab(DiscoverTab.QIBLA) },
             Triple("Tasbeeh", Icons.Filled.TouchApp) { onNavigateToDiscoverTab(DiscoverTab.TASBEEH) },
             Triple("Duas & Azkar", Icons.Filled.Favorite) { onNavigateToDiscoverTab(DiscoverTab.DUAS) },
             Triple("Hadith", Icons.Filled.FormatQuote) { onNavigateToDiscoverTab(DiscoverTab.HADITH) },
             Triple("Hijri Dates", Icons.Filled.CalendarMonth) { onNavigateToDiscoverTab(DiscoverTab.CALENDAR) },
-            Triple("Ramadan", Icons.Filled.NightsStay) { onNavigateToDiscoverTab(DiscoverTab.RAMADAN) },
-            Triple("Search", Icons.Filled.Search) { onNavigateToDiscoverTab(DiscoverTab.SEARCH) }
+            Triple("Ramadan", Icons.Filled.NightsStay) { onNavigateToDiscoverTab(DiscoverTab.RAMADAN) }
         )
 
         LazyRow(

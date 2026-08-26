@@ -8,10 +8,10 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.ai.QuranAudioPlayerManager
-import com.example.ai.QuranPlaybackState
-import com.example.ai.ReciterVoice
-import com.example.ai.ReciterVoicePacks
+import com.example.audio.QuranAudioPlayerManager
+import com.example.audio.QuranPlaybackState
+import com.example.audio.ReciterVoice
+import com.example.audio.ReciterVoicePacks
 import com.example.data.local.AppDatabase
 import com.example.data.local.BookmarkEntity
 import com.example.data.local.DeenDayEntity

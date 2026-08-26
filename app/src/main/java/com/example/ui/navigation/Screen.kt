@@ -16,17 +16,16 @@ sealed class Screen(
     object Prayer : Screen("prayer", "Prayer", Icons.Filled.AccessTime, Icons.Outlined.AccessTime)
     object Discover : Screen("discover", "Discover", Icons.Filled.Explore, Icons.Outlined.Explore)
     object Tracker : Screen("tracker", "Deen Tracker", Icons.Filled.TaskAlt, Icons.Outlined.TaskAlt)
-    object AiScholar : Screen("ai_scholar", "AI Scholar", Icons.Filled.AutoAwesome, Icons.Outlined.AutoAwesome)
+    object Search : Screen("search", "Search", Icons.Filled.Search, Icons.Outlined.Search)
     object Settings : Screen("settings", "Settings", Icons.Filled.Settings, Icons.Outlined.Settings)
 }
 
 enum class DiscoverTab(val title: String, val icon: ImageVector) {
-    AI_SCHOLAR("AI Scholar & Voice", Icons.Filled.AutoAwesome),
+    SEARCH("In-App Search", Icons.Filled.Search),
     QIBLA("Qibla Finder", Icons.Filled.Explore),
     TASBEEH("Digital Tasbeeh", Icons.Filled.TouchApp),
     HADITH("Hadith", Icons.Filled.FormatQuote),
     DUAS("Duas & Azkar", Icons.Filled.Favorite),
     CALENDAR("Hijri Calendar", Icons.Filled.CalendarMonth),
-    RAMADAN("Ramadan Mode", Icons.Filled.NightsStay),
-    SEARCH("Global Search", Icons.Filled.Search)
+    RAMADAN("Ramadan Mode", Icons.Filled.NightsStay)
 }

@@ -42,7 +42,7 @@ import com.example.ui.components.CategoryChip
 import com.example.ui.components.IslamicBannerCard
 import com.example.ui.components.SectionHeader
 import com.example.ui.navigation.DiscoverTab
-import com.example.ui.screens.ai.AiScholarScreen
+import com.example.ui.screens.search.InAppSearchScreen
 import com.example.ui.theme.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -101,14 +101,13 @@ fun DiscoverScreen(
         // Active Tab View Content
         Box(modifier = Modifier.weight(1f)) {
             when (currentTab) {
-                DiscoverTab.AI_SCHOLAR -> AiScholarScreen()
+                DiscoverTab.SEARCH -> InAppSearchScreen()
                 DiscoverTab.QIBLA -> QiblaFinderView(viewModel = viewModel)
                 DiscoverTab.TASBEEH -> TasbeehView(viewModel = viewModel)
                 DiscoverTab.HADITH -> HadithView(viewModel = viewModel)
                 DiscoverTab.DUAS -> DuasAndAzkarView(viewModel = viewModel)
                 DiscoverTab.CALENDAR -> HijriCalendarView(viewModel = viewModel)
                 DiscoverTab.RAMADAN -> RamadanModeView(viewModel = viewModel)
-                DiscoverTab.SEARCH -> GlobalSearchView(viewModel = viewModel)
             }
         }
     }

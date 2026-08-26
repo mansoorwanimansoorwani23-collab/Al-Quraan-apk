@@ -32,7 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ai.ReciterVoicePacks
+import com.example.audio.ReciterVoicePacks
 import com.example.data.local.IslamicDataSource
 import com.example.data.model.Ayah
 import com.example.data.model.Surah
