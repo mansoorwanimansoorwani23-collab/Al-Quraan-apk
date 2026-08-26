@@ -118,3 +118,16 @@ val HadithArabicTextStyle = TextStyle(
     letterSpacing = 0.15.sp
 )
 
+enum class QuranFontOption(val id: String, val displayName: String, val styleDescription: String, val fontFamily: FontFamily) {
+    UTHMANI("Uthmani", "Uthmani Hafs (Madinah)", "Authentic Madinah Mushaf Calligraphy", FontFamily.Default),
+    AMIRI("Amiri", "Amiri Classical Naskh", "Elegant Arabic Typography & Clear Vowels", FontFamily.Serif),
+    SCHEHERAZADE("Scheherazade", "Scheherazade Calligraphic", "Flowing Traditional Arabic Script", FontFamily.Cursive),
+    INDOPAK("IndoPak", "Indo-Pak Naskh", "Prominent Asian Subcontinent Vowel Signs", FontFamily.Monospace),
+    STANDARD("Standard", "Modern Clean Naskh", "High-Legibility Modern Arabic Type", FontFamily.SansSerif)
+}
+
+fun resolveQuranFontFamily(fontId: String): FontFamily {
+    return QuranFontOption.values().find { it.id.equals(fontId, ignoreCase = true) }?.fontFamily ?: FontFamily.Default
+}
+
+

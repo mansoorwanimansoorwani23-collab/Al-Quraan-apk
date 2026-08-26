@@ -2,6 +2,7 @@ package com.example
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.local.IslamicDataSource
 import com.example.data.model.Surah
 import com.example.ui.MainViewModel
+import com.example.ui.components.RealisticIslamicNavVisual
 import com.example.ui.navigation.DiscoverTab
 import com.example.ui.navigation.Screen
 import com.example.ui.screens.discover.DiscoverScreen
@@ -85,6 +87,20 @@ fun DeenMateMainApp(viewModel: MainViewModel) {
         Screen.Settings
     )
 
+    // Android System Back Gesture Handler
+    // If reading a surah, back takes user back to Quran list; if on any other tab, back returns to Home; if on Home, exits app.
+    BackHandler(enabled = activeSurahForReading != null || activeJuzForReading != null || currentScreen != Screen.Home.route) {
+        when {
+            activeSurahForReading != null || activeJuzForReading != null -> {
+                activeSurahForReading = null
+                activeJuzForReading = null
+            }
+            currentScreen != Screen.Home.route -> {
+                currentScreen = Screen.Home.route
+            }
+        }
+    }
+
     // If reading a specific Surah or Juz, show the dedicated SurahReaderScreen
     if (activeSurahForReading != null || activeJuzForReading != null) {
         SurahReaderScreen(
@@ -122,15 +138,25 @@ fun DeenMateMainApp(viewModel: MainViewModel) {
                         }
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
-                            Text(
-                                text = "DeenMate",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                            Row(verticalAlignment = Alignment.Bottom) {
+                                Text(
+                                    text = "DeenMate",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "by Rauf",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.tertiary,
+                                    modifier = Modifier.padding(bottom = 2.dp)
+                                )
+                            }
                             homeState.hijriDate?.let { hijri ->
                                 Text(
-                                    text = hijri.formatShort(),
+                                    text = "${hijri.formatShort()} • ${homeState.userSettings.cityName}",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -168,9 +194,9 @@ fun DeenMateMainApp(viewModel: MainViewModel) {
                         selected = isSelected,
                         onClick = { currentScreen = screen.route },
                         icon = {
-                            Icon(
-                                imageVector = if (isSelected) screen.filledIcon else screen.outlinedIcon,
-                                contentDescription = screen.title
+                            RealisticIslamicNavVisual(
+                                route = screen.route,
+                                isSelected = isSelected
                             )
                         },
                         label = {

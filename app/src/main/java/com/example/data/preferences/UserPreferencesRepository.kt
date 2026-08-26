@@ -51,7 +51,12 @@ data class UserSettings(
     val customMaghribAdhanTime: String = "18:20",
     val customIshaAdhanTime: String = "19:45",
     val adhanSoundName: String = "Makkah Adhan",
-    val is24HourFormat: Boolean = false
+    val is24HourFormat: Boolean = false,
+    val quranFontFamily: String = "Uthmani", // "Uthmani", "Amiri", "Scheherazade", "IndoPak", "Naskh"
+    val hasCustomProfile: Boolean = false,
+    val profileName: String = "",
+    val profileBio: String = "",
+    val profileAvatar: String = "crescent"
 )
 
 class UserPreferencesRepository(private val context: Context) {
@@ -96,6 +101,11 @@ class UserPreferencesRepository(private val context: Context) {
         val CUSTOM_ISHA_ADHAN = stringPreferencesKey("custom_isha_adhan")
         val ADHAN_SOUND = stringPreferencesKey("adhan_sound")
         val IS_24_HOUR_FORMAT = booleanPreferencesKey("is_24_hour_format")
+        val QURAN_FONT_FAMILY = stringPreferencesKey("quran_font_family")
+        val HAS_CUSTOM_PROFILE = booleanPreferencesKey("has_custom_profile")
+        val PROFILE_NAME = stringPreferencesKey("profile_name")
+        val PROFILE_BIO = stringPreferencesKey("profile_bio")
+        val PROFILE_AVATAR = stringPreferencesKey("profile_avatar")
     }
 
     val userSettingsFlow: Flow<UserSettings> = context.dataStore.data.map { prefs ->
@@ -144,7 +154,12 @@ class UserPreferencesRepository(private val context: Context) {
             customMaghribAdhanTime = prefs[PreferencesKeys.CUSTOM_MAGHRIB_ADHAN] ?: "18:20",
             customIshaAdhanTime = prefs[PreferencesKeys.CUSTOM_ISHA_ADHAN] ?: "19:45",
             adhanSoundName = prefs[PreferencesKeys.ADHAN_SOUND] ?: "Makkah Adhan",
-            is24HourFormat = prefs[PreferencesKeys.IS_24_HOUR_FORMAT] ?: false
+            is24HourFormat = prefs[PreferencesKeys.IS_24_HOUR_FORMAT] ?: false,
+            quranFontFamily = prefs[PreferencesKeys.QURAN_FONT_FAMILY] ?: "Uthmani",
+            hasCustomProfile = prefs[PreferencesKeys.HAS_CUSTOM_PROFILE] ?: false,
+            profileName = prefs[PreferencesKeys.PROFILE_NAME] ?: "",
+            profileBio = prefs[PreferencesKeys.PROFILE_BIO] ?: "",
+            profileAvatar = prefs[PreferencesKeys.PROFILE_AVATAR] ?: "crescent"
         )
     }
 
@@ -268,6 +283,28 @@ class UserPreferencesRepository(private val context: Context) {
             it[PreferencesKeys.CUSTOM_ASR_ADHAN] = defaultAsr
             it[PreferencesKeys.CUSTOM_MAGHRIB_ADHAN] = defaultMaghrib
             it[PreferencesKeys.CUSTOM_ISHA_ADHAN] = defaultIsha
+        }
+    }
+
+    suspend fun updateQuranFontFamily(fontFamily: String) {
+        context.dataStore.edit { it[PreferencesKeys.QURAN_FONT_FAMILY] = fontFamily }
+    }
+
+    suspend fun saveUserProfile(name: String, bio: String, avatar: String) {
+        context.dataStore.edit {
+            it[PreferencesKeys.HAS_CUSTOM_PROFILE] = true
+            it[PreferencesKeys.PROFILE_NAME] = name
+            it[PreferencesKeys.PROFILE_BIO] = bio
+            it[PreferencesKeys.PROFILE_AVATAR] = avatar
+        }
+    }
+
+    suspend fun deleteUserProfile() {
+        context.dataStore.edit {
+            it[PreferencesKeys.HAS_CUSTOM_PROFILE] = false
+            it[PreferencesKeys.PROFILE_NAME] = ""
+            it[PreferencesKeys.PROFILE_BIO] = ""
+            it[PreferencesKeys.PROFILE_AVATAR] = "crescent"
         }
     }
 }

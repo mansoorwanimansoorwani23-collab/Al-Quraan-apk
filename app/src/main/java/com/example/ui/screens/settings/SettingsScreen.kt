@@ -1,10 +1,12 @@
 package com.example.ui.screens.settings
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -13,14 +15,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.audio.AdhanAudioPlayer
 import com.example.data.local.IslamicDataSource
 import com.example.domain.calculator.CalculationMethod
 import com.example.domain.calculator.Madhhab
 import com.example.ui.MainViewModel
+import com.example.ui.components.LiquidGlassCard
 import com.example.ui.components.SectionHeader
 import com.example.ui.theme.*
 import kotlinx.coroutines.launch
@@ -30,12 +36,20 @@ fun SettingsScreen(
     viewModel: MainViewModel
 ) {
     val settings by viewModel.userSettings.collectAsState()
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
     var showMethodDialog by remember { mutableStateOf(false) }
     var showCityDialog by remember { mutableStateOf(false) }
     var showSourcesDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
+    var showProfileDialog by remember { mutableStateOf(false) }
+    var isPlayingAdhanTest by remember { mutableStateOf(false) }
+
+    // Profile form state
+    var editName by remember(settings.profileName) { mutableStateOf(settings.profileName) }
+    var editBio by remember(settings.profileBio) { mutableStateOf(settings.profileBio) }
+    var editAvatar by remember(settings.profileAvatar) { mutableStateOf(settings.profileAvatar.ifEmpty { "👤" }) }
 
     LazyColumn(
         modifier = Modifier
@@ -45,18 +59,77 @@ fun SettingsScreen(
         contentPadding = PaddingValues(top = 16.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Optional Profile Section
+        item {
+            SectionHeader(title = "User Profile (Optional)")
+            LiquidGlassCard(
+                modifier = Modifier.fillMaxWidth().testTag("settings_profile_card")
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (settings.hasCustomProfile && settings.profileAvatar.isNotBlank()) settings.profileAvatar else "👤",
+                                fontSize = 24.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(14.dp))
+                        Column {
+                            Text(
+                                text = if (settings.hasCustomProfile && settings.profileName.isNotBlank()) settings.profileName else "Guest User (No Profile)",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = if (settings.hasCustomProfile && settings.profileBio.isNotBlank()) settings.profileBio else "Optional — all app features work offline",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Button(
+                        onClick = { showProfileDialog = true },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        ),
+                        modifier = Modifier.testTag("manage_profile_button")
+                    ) {
+                        Text(
+                            text = if (settings.hasCustomProfile) "Edit" else "Create",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+
         // Location & Calculation Group
         item {
-            SectionHeader(title = "Prayer Times & Calculations")
-            Card(
-                modifier = Modifier.fillMaxWidth().testTag("settings_calculation_card"),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            SectionHeader(title = "Prayer Times & Local Calculations")
+            LiquidGlassCard(
+                modifier = Modifier.fillMaxWidth().testTag("settings_calculation_card")
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column {
                     SettingRow(
                         title = "Location / City",
-                        subtitle = "${settings.cityName}, ${settings.countryName}",
+                        subtitle = "${settings.cityName}, ${settings.countryName} (${settings.latitude.toString().take(6)}, ${settings.longitude.toString().take(6)})",
                         icon = Icons.Filled.LocationOn,
                         onClick = { showCityDialog = true }
                     )
@@ -105,11 +178,16 @@ fun SettingsScreen(
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(22.dp)
                                 )
-                                Spacer(modifier = Modifier.width(14.dp))
+                                Spacer(modifier = Modifier.width(12.dp))
                                 Column {
-                                    Text("Time Format", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                                     Text(
-                                        if (settings.is24HourFormat) "24-Hour clock (e.g. 13:30, 20:15)" else "12-Hour clock with AM/PM (e.g. 1:30 PM)",
+                                        text = "Time Format",
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 14.sp,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = if (settings.is24HourFormat) "24-Hour Clock (e.g. 17:45)" else "12-Hour Clock (e.g. 5:45 PM)",
                                         fontSize = 12.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -121,7 +199,7 @@ fun SettingsScreen(
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             // 12-Hour Option Button
                             FilterChip(
@@ -178,18 +256,16 @@ fun SettingsScreen(
             }
         }
 
-        // Notification Preferences
+        // Notification & Adhan Preferences
         item {
-            SectionHeader(title = "Adhan & Reminders")
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            SectionHeader(title = "Adhan & Prayer Alerts (All 5 Prayers)")
+            LiquidGlassCard(
+                modifier = Modifier.fillMaxWidth().testTag("settings_adhan_card")
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column {
                     SettingToggleRow(
-                        title = "Prayer Notifications",
-                        subtitle = "Native local alerts for 5 daily prayers",
+                        title = "Adhan Notifications Master",
+                        subtitle = "Trigger alerts on lock screen & play Adhan audio",
                         icon = Icons.Filled.NotificationsActive,
                         isChecked = settings.notificationsEnabled,
                         onCheckedChange = { enabled ->
@@ -201,30 +277,134 @@ fun SettingsScreen(
 
                     Divider(modifier = Modifier.padding(vertical = 10.dp), color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
 
-                    SettingToggleRow(
-                        title = "Morning & Evening Azkar",
-                        subtitle = "Daily morning & evening dhikr reminders",
-                        icon = Icons.Filled.Favorite,
-                        isChecked = settings.morningAzkarNotification,
-                        onCheckedChange = { enabled ->
-                            coroutineScope.launch {
-                                viewModel.preferencesRepository.updateDailyReminders("morning", enabled)
-                            }
-                        }
+                    // Individual prayer toggles
+                    val prayerList = listOf(
+                        "Fajr" to settings.fajrNotification,
+                        "Dhuhr" to settings.dhuhrNotification,
+                        "Asr" to settings.asrNotification,
+                        "Maghrib" to settings.maghribNotification,
+                        "Isha" to settings.ishaNotification
                     )
+
+                    Text("Individual Prayer Reminders:", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    prayerList.forEach { (prayerName, isEnabled) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(prayerName, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                            Switch(
+                                checked = isEnabled,
+                                onCheckedChange = { check ->
+                                    coroutineScope.launch {
+                                        viewModel.preferencesRepository.updatePrayerNotification(prayerName.lowercase(), check)
+                                    }
+                                }
+                            )
+                        }
+                    }
+
+                    Divider(modifier = Modifier.padding(vertical = 10.dp), color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+
+                    // Adhan Audio Preview Button
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Test Adhan Sound", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Text("Preview Adhan audio call to prayer", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+
+                        Button(
+                            onClick = {
+                                if (isPlayingAdhanTest) {
+                                    AdhanAudioPlayer.stopAdhan()
+                                    isPlayingAdhanTest = false
+                                } else {
+                                    AdhanAudioPlayer.playAdhanSound(context, settings.adhanSoundName, durationSeconds = 12)
+                                    isPlayingAdhanTest = true
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isPlayingAdhanTest) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isPlayingAdhanTest) Icons.Filled.Stop else Icons.Filled.VolumeUp,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(if (isPlayingAdhanTest) "Stop" else "Play Test", fontSize = 12.sp)
+                        }
+                    }
                 }
             }
         }
 
-        // Quran & Reading Settings
+        // Quran Script & Display Settings
         item {
-            SectionHeader(title = "Quran & Display")
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            SectionHeader(title = "Quran Arabic Script & Display")
+            LiquidGlassCard(
+                modifier = Modifier.fillMaxWidth().testTag("settings_quran_card")
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column {
+                    Text("Arabic Quran Script Calligraphy:", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    QuranFontOption.values().forEach { fontOption ->
+                        val isSelected = settings.quranFontFamily.equals(fontOption.id, ignoreCase = true)
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 3.dp)
+                                .clickable {
+                                    coroutineScope.launch {
+                                        viewModel.preferencesRepository.updateQuranFontFamily(fontOption.id)
+                                    }
+                                },
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = fontOption.displayName,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        fontSize = 13.sp,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = fontOption.styleDescription,
+                                        fontSize = 10.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Text(
+                                    text = "بِسْمِ اللَّهِ",
+                                    fontFamily = fontOption.fontFamily,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
                     Text("Arabic Font Size: ${settings.arabicFontSize.toInt()}sp", fontWeight = FontWeight.Medium, fontSize = 14.sp)
                     Slider(
                         value = settings.arabicFontSize,
@@ -258,13 +438,11 @@ fun SettingsScreen(
 
         // About & Authentic Sources Reassurance
         item {
-            SectionHeader(title = "Authenticity & Offline Privacy")
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            SectionHeader(title = "Authenticity & Developer Info")
+            LiquidGlassCard(
+                modifier = Modifier.fillMaxWidth().testTag("settings_about_card")
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column {
                     SettingRow(
                         title = "Islamic Content Sources & References",
                         subtitle = "Verified Uthmani Quran, Sahih Bukhari, Sahih Muslim, Hisn al-Muslim",
@@ -285,13 +463,120 @@ fun SettingsScreen(
 
                     SettingRow(
                         title = "About DeenMate & Developer",
-                        subtitle = "Lead Developer: Rauf • Version 1.0",
+                        subtitle = "DeenMate by Rauf • Version 2.0 M",
                         icon = Icons.Filled.Info,
                         onClick = { showAboutDialog = true }
                     )
                 }
             }
         }
+    }
+
+    // Optional Profile Dialog
+    if (showProfileDialog) {
+        AlertDialog(
+            onDismissRequest = { showProfileDialog = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(if (settings.hasCustomProfile) "Edit Profile" else "Create Optional Profile", fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column {
+                    Text(
+                        "Creating a profile is completely optional. You can use DeenMate without creating any profile.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedTextField(
+                        value = editName,
+                        onValueChange = { editName = it },
+                        label = { Text("Display Name") },
+                        placeholder = { Text("e.g. Abdullah, Fatima") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        value = editBio,
+                        onValueChange = { editBio = it },
+                        label = { Text("Spiritual Goal / Bio") },
+                        placeholder = { Text("e.g. Memorizing Surah Al-Kahf") },
+                        maxLines = 2,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text("Select Avatar:", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    val avatars = listOf("👤", "🌙", "🕌", "⭐", "📖", "🤲", "🌿", "🕋")
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        avatars.forEach { avatarEmoji ->
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (editAvatar == avatarEmoji) MaterialTheme.colorScheme.primaryContainer
+                                        else MaterialTheme.colorScheme.surfaceVariant
+                                    )
+                                    .clickable { editAvatar = avatarEmoji },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(avatarEmoji, fontSize = 18.sp)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            viewModel.preferencesRepository.saveUserProfile(
+                                name = editName.trim().ifEmpty { "Believer" },
+                                bio = editBio.trim(),
+                                avatar = editAvatar
+                            )
+                            showProfileDialog = false
+                        }
+                    }
+                ) {
+                    Text("Save Profile")
+                }
+            },
+            dismissButton = {
+                if (settings.hasCustomProfile) {
+                    TextButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                viewModel.preferencesRepository.deleteUserProfile()
+                                editName = ""
+                                editBio = ""
+                                editAvatar = "👤"
+                                showProfileDialog = false
+                            }
+                        }
+                    ) {
+                        Text("Remove Profile", color = MaterialTheme.colorScheme.error)
+                    }
+                } else {
+                    TextButton(onClick = { showProfileDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            }
+        )
     }
 
     // About Developer Dialog
@@ -307,13 +592,13 @@ fun SettingsScreen(
             },
             text = {
                 Column {
-                    Text("DeenMate — Complete Muslim Lifestyle Mobile App", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("• Lead Developer: Rauf", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                    Text("DeenMate — Version 2.0 M", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text("• Purpose: Built to empower every Muslim with authentic, offline-first tools for daily worship, Quran study, accurate prayer times, Qibla finding, and deen tracking.", fontSize = 13.sp)
+                    Text("by Rauf", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = MaterialTheme.colorScheme.tertiary)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text("• Purpose: Built with care by Lead Developer Rauf to empower every Muslim with authentic, offline-first tools for daily worship, Quran recitation & multiple scripts, high-precision local prayer times, Qibla finding, and deen tracking.", fontSize = 13.sp)
                     Spacer(modifier = Modifier.height(6.dp))
-                    Text("• Architecture: 100% on-device astronomical prayer calculations, local Uthmani Quran reader, native Android exact alarms, verified authentic Hadith & Dua engines, and in-app Islamic knowledge search & web reader.", fontSize = 13.sp)
+                    Text("• Local Calculation Engine: Solar astronomical algorithm with exact latitude, longitude, and local timezone awareness.", fontSize = 13.sp)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("May Allah accept this humble effort from Developer Rauf and make it beneficial for the Ummah.", fontSize = 12.sp, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic, color = MaterialTheme.colorScheme.primary)
                 }
@@ -333,15 +618,13 @@ fun SettingsScreen(
             title = { Text("Authentic Islamic Sources", fontWeight = FontWeight.Bold) },
             text = {
                 Column {
-                    Text("• Quran Text: Standard King Fahd Complex Uthmani Script.", fontSize = 13.sp)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text("• Translation: Sahih International verified translation.", fontSize = 13.sp)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text("• Hadith: Authenticated Sahih collections (Sahih al-Bukhari, Sahih Muslim, Jami` at-Tirmidhi, 40 Hadith Nawawi) with strict reference numbering.", fontSize = 13.sp)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text("• Duas & Azkar: Hisn al-Muslim (Fortress of the Muslim) by Saeed bin Ali bin Wahf Al-Qahtani.", fontSize = 13.sp)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text("• Prayer Calculations: High-precision astronomical equations using standard solar declination and equation of time.", fontSize = 13.sp)
+                    Text("1. Holy Quran: Tanzil.net verified Uthmani Text & Sahih International English translation.", fontSize = 13.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("2. Hadith: Sahih al-Bukhari & Sahih Muslim collections.", fontSize = 13.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("3. Duas: Hisn al-Muslim (Fortress of the Muslim) by Sa'id bin Wahf Al-Qahtani.", fontSize = 13.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("4. Prayer Calculations: Muslim World League, ISNA, Umm al-Qura, Egyptian General Authority of Survey, University of Islamic Sciences Karachi, and standard solar algorithms.", fontSize = 13.sp)
                 }
             },
             confirmButton = {
@@ -352,28 +635,44 @@ fun SettingsScreen(
         )
     }
 
-    // City Dialog
+    // City Selection Dialog
     if (showCityDialog) {
         AlertDialog(
             onDismissRequest = { showCityDialog = false },
-            title = { Text("Select Location", fontWeight = FontWeight.Bold) },
+            title = { Text("Select Your Location", fontWeight = FontWeight.Bold) },
             text = {
                 LazyColumn(modifier = Modifier.height(300.dp)) {
                     items(IslamicDataSource.POPULAR_CITIES) { city ->
-                        Row(
+                        val isSelected = city.name == settings.cityName
+                        Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .padding(vertical = 2.dp)
+                                .clip(RoundedCornerShape(8.dp))
                                 .clickable {
-                                    viewModel.selectCity(city)
-                                    showCityDialog = false
-                                }
-                                .padding(vertical = 10.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                                    coroutineScope.launch {
+                                        viewModel.selectCity(city)
+                                        showCityDialog = false
+                                    }
+                                },
+                            color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
                         ) {
-                            Text("${city.name}, ${city.country}", fontSize = 14.sp)
-                            if (settings.cityName == city.name) {
-                                Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = city.name,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(text = city.country, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                if (isSelected) {
+                                    Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                }
                             }
                         }
                     }
@@ -381,7 +680,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showCityDialog = false }) {
-                    Text("Done")
+                    Text("Close")
                 }
             }
         )
@@ -395,20 +694,35 @@ fun SettingsScreen(
             text = {
                 LazyColumn(modifier = Modifier.height(300.dp)) {
                     items(CalculationMethod.values()) { method ->
-                        Row(
+                        val isSelected = method == settings.calculationMethod
+                        Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .padding(vertical = 2.dp)
+                                .clip(RoundedCornerShape(8.dp))
                                 .clickable {
-                                    coroutineScope.launch { viewModel.preferencesRepository.updateCalculationMethod(method) }
-                                    showMethodDialog = false
-                                }
-                                .padding(vertical = 10.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                                    coroutineScope.launch {
+                                        viewModel.preferencesRepository.updateCalculationMethod(method)
+                                        showMethodDialog = false
+                                    }
+                                },
+                            color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
                         ) {
-                            Text(method.displayName, fontSize = 13.sp, fontWeight = if (settings.calculationMethod == method) FontWeight.Bold else FontWeight.Normal)
-                            if (settings.calculationMethod == method) {
-                                Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = method.displayName,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    fontSize = 13.sp,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                if (isSelected) {
+                                    Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                }
                             }
                         }
                     }
@@ -416,7 +730,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showMethodDialog = false }) {
-                    Text("Done")
+                    Text("Close")
                 }
             }
         )

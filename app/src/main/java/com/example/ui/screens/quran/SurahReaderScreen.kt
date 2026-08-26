@@ -487,6 +487,7 @@ fun SurahReaderScreen(
                 AyahCard(
                     ayah = ayah,
                     arabicFontSize = settings.arabicFontSize,
+                    quranFontFamily = settings.quranFontFamily,
                     showTranslation = settings.showTranslation,
                     showTransliteration = settings.showTransliteration,
                     isBookmarked = isBookmarked,
@@ -620,6 +621,58 @@ fun SurahReaderScreen(
             text = {
                 Column {
                     Text(
+                        text = "Arabic Quran Script",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    QuranFontOption.values().forEach { fontOption ->
+                        val isSelected = settings.quranFontFamily.equals(fontOption.id, ignoreCase = true)
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 3.dp)
+                                .clickable {
+                                    coroutineScope.launch {
+                                        viewModel.preferencesRepository.updateQuranFontFamily(fontOption.id)
+                                    }
+                                },
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = fontOption.displayName,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        fontSize = 13.sp,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = fontOption.styleDescription,
+                                        fontSize = 10.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Text(
+                                    text = "بِسْمِ اللَّهِ",
+                                    fontFamily = fontOption.fontFamily,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
                         text = "Arabic Font Size: ${settings.arabicFontSize.toInt()}sp",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
@@ -631,7 +684,7 @@ fun SurahReaderScreen(
                         steps = 10
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -671,6 +724,7 @@ fun SurahReaderScreen(
 fun AyahCard(
     ayah: Ayah,
     arabicFontSize: Float,
+    quranFontFamily: String = "Uthmani",
     showTranslation: Boolean,
     showTransliteration: Boolean,
     isBookmarked: Boolean,
@@ -777,11 +831,12 @@ fun AyahCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Arabic text with right alignment
+            // Arabic text with right alignment and selected Quran font family
             Text(
                 text = ayah.arabicText,
+                fontFamily = resolveQuranFontFamily(quranFontFamily),
                 fontSize = arabicFontSize.sp,
-                lineHeight = (arabicFontSize * 1.6f).sp,
+                lineHeight = (arabicFontSize * 1.65f).sp,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Right,
                 color = MaterialTheme.colorScheme.onSurface,

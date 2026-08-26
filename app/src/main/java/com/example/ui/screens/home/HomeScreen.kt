@@ -33,6 +33,8 @@ import com.example.domain.calculator.PrayerType
 import com.example.ui.HomeUiState
 import com.example.ui.MainViewModel
 import com.example.ui.components.IslamicBannerCard
+import com.example.ui.components.LiquidGlassCard
+import com.example.ui.components.MakkahMadinahLiveCard
 import com.example.ui.components.SectionHeader
 import com.example.ui.navigation.DiscoverTab
 import com.example.ui.navigation.Screen
@@ -64,6 +66,94 @@ fun HomeScreen(
         contentPadding = PaddingValues(top = 16.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // 0. Top Brand & Developer Identity Header: "DeenMate by Rauf"
+        item {
+            LiquidGlassCard(
+                modifier = Modifier.fillMaxWidth().testTag("deenmate_top_brand_header")
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text(
+                                text = "DeenMate",
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "v2.0 M",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                                modifier = Modifier.padding(bottom = 3.dp)
+                            )
+                        }
+                        Text(
+                            text = "by Rauf",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.tertiary,
+                            letterSpacing = 0.5.sp
+                        )
+                    }
+
+                    // Optional Profile Quick Badge
+                    Surface(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(14.dp))
+                            .clickable { onNavigateToScreen(Screen.Settings.route) }
+                            .testTag("home_profile_badge"),
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                    ) {
+                        if (uiState.userSettings.hasCustomProfile && uiState.userSettings.profileName.isNotBlank()) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = uiState.userSettings.profileAvatar.ifEmpty { "👤" },
+                                    fontSize = 14.sp
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = uiState.userSettings.profileName.take(10),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        } else {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.PersonOutline,
+                                    contentDescription = "Optional Profile",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Profile",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // 1. Hero Date & Hijri Header Card
         item {
             IslamicBannerCard(
@@ -74,40 +164,9 @@ fun HomeScreen(
             )
         }
 
-        // Developer Rauf Attribution Badge
+        // Makkah & Madinah Live Visual
         item {
-            Surface(
-                modifier = Modifier.fillMaxWidth().testTag("developer_badge_home"),
-                shape = RoundedCornerShape(14.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Filled.Code,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Developed by Rauf",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    Text(
-                        text = "DeenMate v1.0 • Offline & Private",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+            MakkahMadinahLiveCard()
         }
 
         // Search Bar Tile on Dashboard
@@ -195,6 +254,8 @@ fun HomeScreen(
             DailyAyahCard(
                 ayah = uiState.dailyAyah,
                 surahName = uiState.dailyAyahSurahName,
+                quranFontFamily = uiState.userSettings.quranFontFamily,
+                arabicFontSize = uiState.userSettings.arabicFontSize,
                 onReadQuran = { onOpenSurah(2) },
                 onBookmark = {
                     uiState.dailyAyah?.let { ayah ->
@@ -575,6 +636,8 @@ private fun TodayDeenProgressCard(
 private fun DailyAyahCard(
     ayah: Ayah?,
     surahName: String,
+    quranFontFamily: String = "Uthmani",
+    arabicFontSize: Float = 24f,
     onReadQuran: () -> Unit,
     onBookmark: () -> Unit
 ) {
@@ -624,11 +687,12 @@ private fun DailyAyahCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Arabic text
+            // Arabic text with selected font
             Text(
                 text = ayah.arabicText,
-                fontSize = 22.sp,
-                lineHeight = 36.sp,
+                fontFamily = resolveQuranFontFamily(quranFontFamily),
+                fontSize = (arabicFontSize * 0.9f).sp,
+                lineHeight = (arabicFontSize * 1.55f).sp,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Right,
                 color = MaterialTheme.colorScheme.onSurface,
