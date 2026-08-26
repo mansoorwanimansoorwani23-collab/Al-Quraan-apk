@@ -36,6 +36,7 @@ import com.example.ui.screens.home.HomeScreen
 import com.example.ui.screens.prayer.PrayerScreen
 import com.example.ui.screens.quran.QuranScreen
 import com.example.ui.screens.quran.SurahReaderScreen
+import com.example.ui.screens.search.SearchScreen
 import com.example.ui.screens.settings.SettingsScreen
 import com.example.ui.screens.tracker.TrackerScreen
 import com.example.ui.theme.DeenMateTheme
@@ -140,8 +141,7 @@ fun DeenMateMainApp(viewModel: MainViewModel) {
                 actions = {
                     IconButton(
                         onClick = {
-                            activeDiscoverTab = DiscoverTab.SEARCH
-                            currentScreen = Screen.Discover.route
+                            currentScreen = Screen.Search.route
                         },
                         modifier = Modifier.testTag("top_search_button")
                     ) {
@@ -232,6 +232,20 @@ fun DeenMateMainApp(viewModel: MainViewModel) {
                         DiscoverScreen(
                             viewModel = viewModel,
                             initialTab = activeDiscoverTab
+                        )
+                    }
+                    Screen.Search.route -> {
+                        SearchScreen(
+                            viewModel = viewModel,
+                            onBack = { currentScreen = Screen.Home.route },
+                            onOpenSurah = { surahNum ->
+                                val surah = IslamicDataSource.SURAHS.find { it.number == surahNum } ?: IslamicDataSource.SURAHS[0]
+                                activeSurahForReading = surah
+                            },
+                            onNavigateToDiscoverTab = { tab ->
+                                activeDiscoverTab = tab
+                                currentScreen = Screen.Discover.route
+                            }
                         )
                     }
                     Screen.Tracker.route -> {

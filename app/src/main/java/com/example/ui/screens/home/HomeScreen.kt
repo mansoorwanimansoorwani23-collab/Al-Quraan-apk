@@ -110,6 +110,59 @@ fun HomeScreen(
             }
         }
 
+        // Search Bar Tile on Dashboard
+        item {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable { onNavigateToScreen(Screen.Search.route) }
+                    .testTag("dashboard_search_bar"),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surface,
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)),
+                shadowElevation = 2.dp
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Search,
+                        contentDescription = "Search",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Search Quran, Hadith & Duas...",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "Tap to search or ask any Islamic topic",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Text(
+                            text = "Search",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                        )
+                    }
+                }
+            }
+        }
+
         // 2. Next Prayer Countdown Card
         item {
             NextPrayerCountdownCard(
@@ -360,7 +413,7 @@ private fun QuickActionGrid(
         SectionHeader(title = "Quick Shortcuts")
 
         val actions = listOf(
-            Triple("Search", Icons.Filled.Search) { onNavigateToDiscoverTab(DiscoverTab.SEARCH) },
+            Triple("Search", Icons.Filled.Search) { onNavigateToScreen(Screen.Search.route) },
             Triple("Holy Quran", Icons.Filled.MenuBook) { onNavigateToScreen(Screen.Quran.route) },
             Triple("Qibla Finder", Icons.Filled.Explore) { onNavigateToDiscoverTab(DiscoverTab.QIBLA) },
             Triple("Tasbeeh", Icons.Filled.TouchApp) { onNavigateToDiscoverTab(DiscoverTab.TASBEEH) },
