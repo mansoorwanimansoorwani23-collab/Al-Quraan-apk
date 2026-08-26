@@ -17,9 +17,6 @@ jobs:
     name: Build & Release Debug APK
     runs-on: ubuntu-latest
 
-    env:
-      GRADLE_OPTS: "-Dorg.gradle.jvmargs='-Xmx4096m -XX:+UseG1GC' -Dorg.gradle.configuration-cache=false -Djava.awt.headless=true"
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -31,11 +28,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          cache-disabled: true
 
       - name: Generate Debug Keystore
         run: |
@@ -50,11 +42,13 @@ jobs:
           fi
 
       - name: Build Debug APK
+        env:
+          GRADLE_OPTS: "-Xmx4096m -XX:+UseG1GC -Djava.awt.headless=true -Dorg.gradle.parallel=false -Dorg.gradle.workers.max=2 -Dkotlin.compiler.execution.strategy=in-process"
         run: |
           if [ -f "./gradlew" ]; then
-            ./gradlew assembleDebug --no-daemon --no-configuration-cache --stacktrace
+            ./gradlew assembleDebug --no-daemon --no-configuration-cache --max-workers=2 --stacktrace
           else
-            gradle assembleDebug --no-daemon --no-configuration-cache --stacktrace
+            gradle assembleDebug --no-daemon --no-configuration-cache --max-workers=2 --stacktrace
           fi
 
       - name: Locate Debug APK
